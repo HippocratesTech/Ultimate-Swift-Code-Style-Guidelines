@@ -78,23 +78,19 @@ Projects don't tolerate any warnings.
 
 All folders and files in a directory or a project section are sorted alphabetically, first directories, then files.
 
-File sorting doesn't consider files' extensions. However, an engineer is strongly encouraged to name files to have files which are close to each other semantically remaining closer to each other in the list.
-
 Files are called after their containing types, or the primary one if multiple type declarations are contained.
 
 If the primary content of the file is a type extension, the file shall be named after this type concatenating a `+` sign and conformance protocol name. E.g., `String+ConvertibleToNumber.swift`.
 
 [Return to Table of Contents](#table-of-contents)
 
-<h4 id="cvs">CVS</h4>
+<h4 id="cvs">Versioning</h4>
 
-_Not going deeply into the topic, since each CVS has its own guidelines._
+_Not going deeply into the topic, since each versioning system has its own guidelines._
 
 Every commit is atomic and present a meaningful and working state of the project. Checking out at any commit results in a working software. Considering these two rules, an engineer shall think thoroughly about implementation phases, or refactoring steps.
 
-Commit name is formulated in the imperative case ("Do the thing"). Comprehensive details are optional and separated by a blank line if present.
-
-Any temporary code, anything is committed. Otherwise it will live while the repository does.
+Temporary code and work-in-progress solutions can be commited so they can be reviewed by other team members, but shouldn't be merged to the main develop or master branches.
 
 [Return to Table of Contents](#table-of-contents)
 
@@ -324,7 +320,7 @@ File length doesn't have a specific line number limitation since basically, code
 
 <h4 id="imports">Imports</h4>
 
-All imports go in the very beginning of the file and sorted lexicographically. Empty lines between imports are not used.
+All imports go in the very beginning of the file and sorted alphabetically. No empty lines between imports.
 
 More specific imports (like `Darwin`) are preferable over less specific (like `Foundation`) to keep namespace cleaner and probably, the resulting build thinner.
 
@@ -334,7 +330,7 @@ More specific imports (like `Foundation`) are not imported explicitly if less sp
 
 <h4 id="members-order">Members' Order</h4>
 
-Properties within a subgroup (as well as enum cases) must be ordered, firstly, by its access modifier, then by the class/instance membership type, then lexicographically.
+Properties within a subgroup (as well as enum cases) must be ordered, firstly, by its access modifier, then by the class/instance membership type, then alphabetically.
 
 Logical sorting is acceptable, but not encouraged and may be used only if all declarations can be sorted logically. Partially logical and partially lexicographical ordering is avoided.
 
@@ -387,30 +383,18 @@ Private methods are sorted by their first mention (earlier mentions go first). M
 
 <h4 id="protocol-conformances">Protocol Conformances</h4>
 
-Protocol conformances are added within separate extensions unless it's the main point of type existence.
+Protocol conformances are added in the type declaraction if possible. This way the declaration is easier to read and Xcode's help popover reveals all the conformances so it's clear from every reference in the code what the type does.
+
+When implementing a protocol, the same order of methods and properties is kept.
 
 **Do**:
-
-```swift
-protocol Presenter {
-    // ...
-}
-
-struct DefaultPresenter: Presenter {
-    // ...
-}
-```
 
 ```swift
 protocol Presentable {
     // ...
 }
 
-final class ViewController: UIViewController {
-    // ...
-}
-
-extension ViewController: Presentable {
+final class ViewController: UIViewController, Presentable {
     // ...
 }
 ```
@@ -418,15 +402,15 @@ extension ViewController: Presentable {
 **Don't**:
 
 ```swift
-protocol Presenter {
+protocol Presentable {
     // ...
 }
 
-struct DefaultPresenter {
+class ViewController: UIViewController {
     // ...
 }
 
-extension DefaultPresenter: Presenter {
+extension ViewController: Presentable {
     // ...
 }
 ```
@@ -436,15 +420,11 @@ Protocol extensions go after the main declaration and are separated by a ```// M
 **Do**:
 
 ```swift
-struct SomeType {
+struct SomeType: DifferentProtocol {
 
     // Main implementation goes here.
 
-}
-
-// MARK: - DifferentProtocol
-
-extension SomeType: DifferentProtocol {
+    // MARK: - DifferentProtocol
 
     // MARK: - Methods
 
@@ -548,7 +528,7 @@ One line comments start with `\\`  (although `\\\` makes comments look fancier, 
 
 Multi-line comments start with `\*` and end with `*\`. Those are placed on separate lines. No blank lines after symbols denoting the beginning of comment and before ones at the end.
 
-Comments, both single- and multi-line, are placed on the line above the commented code and separated from a preceding code by a blank line. The latter is not relevant if a comment is the first line of the scope. Also, it's acceptable to place one-line comments at the end of the commented line of code, separating it by a space, if and only if the comment doesn't make this line too long. 
+Comments, both single- and multi-line, are placed on the line above the commented code and separated from a preceding code by a blank line. The latter is not relevant if a comment is the first line of the scope. Also, it's acceptable to place one-line comments at the end of the commented line of code, separating it by a space, if and only if the comment doesn't make this line too long.
 
 [Return to Table of Contents](#table-of-contents)
 

@@ -572,9 +572,9 @@ Methods without side-effects have names in the form of noun phrases: `let size =
 
 Methods with side effects are called in the form of an imperative verb: `list.sort()`.
 
-Similar non-mutating methods that return new values must be called using past participle: `let newList = oldList.sorted()`. Or present participle: `let newList = oldList.sortingLexicographically()`.
+Similar non-mutating methods that return new values must be called using past participle: `let newList = oldList.sorted()`.
 
-Argument names follow rules for variable names. An engineer makes use of Swift syntax possibilities, for example: `func insert(_ element: Element, at index: Int)`.
+Argument names follow rules for variable names. An engineer makes use of Swift syntax possibilities, for example: `func insert(_ element: Element, at index: Int)`. The method name should be readable as a natural sentence if possible.
 
 Factory method names start with the word "make". Both factory methods and initializers have their arguments as a list, conventionally it's not necessary for them to form phrases.
 
@@ -586,16 +586,31 @@ init(name: String, id: Int)
 func makeView(position: CGPoint, size: CGSize) -> UIView
 ```
 
-It's very common to force engineers to put an object of delegation as the first argument of delegation methods. This is not strictly necessary and is used only in cases when it is really possible and makes sense for a type to be a delegate of multiple objects of the same type.
+It's very common to force engineers to put an object of delegation as the first argument of delegation methods. This is not strictly necessary but recommended as it provides the clarity and prevents naming conflicts.
 
 **Do**:
 
 ```swift
-protocol ScreenPresenter {
+protocol CountryPickerDelegate {
 
     // MARK: - Methods
     
-    func buttonTapped()
+    func countryPicker(_ picker: CountryPicker, didSelectCountry country: Country)
+    
+}
+```
+
+Or if there will always be only one CountryPicker per delegate for some reason, then:
+
+**Do**:
+
+
+```swift
+protocol CountryPickerDelegate {
+
+    // MARK: - Methods
+    
+    func countryPicker(_ picker: CountryPicker, didSelectCountry country: Country)
     
 }
 ```
@@ -607,7 +622,7 @@ protocol ScreenPresenter {
 
     // MARK: - Methods
     
-    func buttonTapped(_ screen: UIViewController, button: UIButton)
+    func didSelectCountry(_ country: Country)
     
 }
 ```
@@ -623,33 +638,29 @@ private func nextButtonAction(_ sender: UIButton) { // ...
 
 The sender argument is optional since it stays unused very often nowadays.
 
-**Don't**:
-
-```swift
-@objc
-private func onNextButtonTapped(_ sender: UIButton) { // ...
-```
-
-The latter naming convention is confusing because makes you think of delegation. However, actions may be thought of as a kind of delegation, and a naming convention like that might be considered acceptable.
-
 [Return to Table of Contents](#table-of-contents)
 
 <h3 id="api">API</h3>
 
 Basically, types representing pure values which could be fairly interchanged by values themselves should be `struct`, otherwise (e.g., objects containing state of having a lifecycle) – `class`. Other considerations for choosing over `struct`s and `class`es – expected semantics, memory management, etc., are not of the topic of this document.
 
-Properties are expected to have a constant time complexity. If one doesn't it's changed to a method.
+Properties are expected to have a constant time complexity. Otherwise methods are used.
 
-Optional Booleans and collections are avoided because they bring degraded states: for example, what's the difference between an empty array and a `nil` array within the same context?
+Optional Booleans and collections are avoided unless there is a need for an undefined state.
 
-Free functions are usually a design flow. If one exists, an engineer double-checks whether it really shouldn't correspond to any type.
-
-Methods that do some actions don't return objects of these actions (e.g., a presenting view controller method shall not return the presented view controller).
+Methods with side effects shouldn't generally return objects of these actions and if so, `@discardableResult` annotation is used (e.g., a presenting view controller method shall not return the presented view controller).
 
 **Do**:
 
 ```swift
 func presentErrorAlert()
+```
+
+**Do**:
+
+```swift
+@discardable
+func presentErrorAlert() -> UIAlertViewController
 ```
 
 **Don't**:
@@ -658,19 +669,17 @@ func presentErrorAlert()
 func presentErrorAlert() -> UIAlertViewController
 ```
 
-However, if the return value might be useful in some specific situations, it doesn't force one to use it (`@discardableResult` annotation serves this purpose).  
-
 Abbreviations (except for the common ones) and shortenings are avoided. (Possible exceptions are local variables within implementation blocks of code.)
 
-**Do**: `let currentValue = 1`
+**Do**: `let currentValue: Int = 1`
 
-**Don't**: `let curValue = 1`
+**Don't**: `let curValue: Int = 1`
 
 [Return to Table of Contents](#table-of-contents)
 
 <h4 id="encapsulation">Encapsulation</h4>
 
-Any class declaration gains of adding `final` modifier, an engineer adds it as a default and remove in case of a real necessity. (Experienced engineers prefer composition over inheritance.)
+Any class declaration gains of adding `final` modifier, an engineer adds it as a default and remove in case of a real necessity. (Composition over inheritance.)
 
 `fileprivate` access modifier is usually a code smell. An engineer must re-consider an alternative design approach (e.g., nested types).
 
@@ -684,13 +693,49 @@ Generally, encapsulation is honored in any way. E.g. `@IBOutlet` properties and 
 
 <h3 id="implementation">Implementation</h3>
 
-An engineer makes use of the type inference and the current namespace. Compiler notifies them when the explicit type is necessary. However, there might be occasions when explicit types make code a little bit, though significantly, more effective.
+Clarity over brevity. Types should always be specified to make sure the code is understandable on the first read. The intention should be clear.
 
-Similar rules are applied for nested types and enum cases. The shorthand notation starting with a dot is preferred whenever is possible.
+**Do**: 
+```swift
+bubbleView.dropShadow(with: UIColor.primary, cornerRadius: 21.0)
+```
+
+```swift
+bubbleView.dropShadow(withColor: .primary, cornerRadius: 21.0)
+```
+
+**Don't**:
+```swift
+bubbleView.dropShadow(with: .primary, cornerRadius: 21.0)
+```
+
+Similar rules are applied for nested types and enum cases. The shorthand notation starting with a dot is preferred as the context is always clear.
 
 An engineer makes use of lazy instantiation for properties that aren't immediately needed. They also prefer complex lazily instantiated properties for subviews of UIKit's views and view controllers, especially over configuring them within view controller's lifecycle methods implementation (a common mistake is to write big and awkward `viewDidLoad()` implementations consisting of the full view controller's initial configuration).
 
 Conditional code checks "the golden path" (the most probable option) first. Inverted checks (like `!incorrect`) are discouraged because of poor readability. When both rules appear to be mutually exclusive, an alternative way to write down the flow must be considered.
+
+**Do**: 
+```swift
+if mostProbableOption {
+    ...
+} else if thisCanAlsoHappen {
+    ...
+} else if thisWillProbablyNeverHappen {
+    ...
+}
+```
+
+**Don't**:
+```swift
+if thisWillProbablyNeverHappen {
+    ...
+} else if thisCanAlsoHappen {
+    ...
+} else if mostProbableOption {
+    ...
+}
+```
 
 **Initialization**
 
@@ -743,7 +788,7 @@ Methods, as well as any code part, follow the Big-S. (Single Responsibility Prin
 
 <h4 id="optionality">Optionality</h4>
 
-An engineer avoids force-unwraps. Basically, if an object is optional that's because it really might be `nil` in certain conditions. If an engineer is 100% sure (which is, I'm 100% sure, impossible) that the optional value can't be `nil`, it's better to state their point of view explicitly. For instance, by adding some kind of assertion inside `guard let`-`else` statement.
+An engineer avoids force-unwraps. Basically, if an object is optional that's because it really might be `nil` in certain conditions. If an engineer is 100% sure that the optional value can't be `nil`, it's better to state their point of view explicitly. For instance, by adding some kind of assertion inside `guard let`-`else` statement.
 
 A possibly justified reason to have a force-unwrapped variable is late initialization. However, the latter may also be error-prone and sometimes is avoided.
 
@@ -807,7 +852,7 @@ _I'm aware that it's not the canonical, functional, definition of the term "pure
 
 <h4 id="testing">Testing</h4>
 
-Basically, an engineer tests interfaces, not implementation details – by calling public APIs with some input data and asserting the expected outputs. 
+An engineer tests interfaces, not implementation details – by calling public APIs with some input data and asserting the expected outputs. 
 
 The testing purposes don't intervene in the principles of encapsulation. If anything is wanted to be overridden or substantiated in the test code, protocols and their mock or stub implementations are always to the rescue.
 
@@ -829,7 +874,7 @@ let bottom: CGPoint
 
 **Type aliases**
 
-`typealias` declaration is used only for the sake of brevity when it doesn't prevent of clarity.
+`typealias` declaration is used only for the sake of brevity if there is a need to unify repetitive declarations.
 
 **Do**:
 

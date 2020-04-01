@@ -1038,25 +1038,29 @@ func makeOrderViewController(model: OrderModel) -> UIViewController {
 
 <h4 id="closures">Closures</h4>
 
-Trailing closure syntax is preferable anywhere possible. Therefore, methods with closures as arguments aren't overloaded differing only by the name of trailing closures – that leads to ambiguity on the call site. Empty parentheses are not used on the call site for the methods with the only closure as an argument.
+Trailing closure syntax is preferable anywhere possible. Empty parentheses are not used on the call site for the methods with the only closure as an argument.
 
 **Do**:
 
 ```swift
-requestMoreMoney { spend($0) }
+categories.filter { $0.title == "Pants" }
+```
+
+```swift
+fetchDatabaseUpdates(progress: { print($0) })
 ```
 
 **Don't**:
 
 ```swift
-requestMoreMoney() { spend($0) }
+categories.filter() { $0.title == "Pants" }
 ```
 
 ```swift
-requestMoreMoney(completionHandler: { spend($0) })
+fetchDatabaseUpdates { print($0) }
 ```
 
-The functional style is preferable whenever possible: explicit argument names are omitted (placeholders like `$0` are used), one line closure content scope is placed on the same line with braces.
+Explicit argument names are preferred whenever more clarity is needed, placeholders like `$0` are used if the context is unambiguous, one line closure content scope is placed on the same line with braces.
 
 **Don't**:
 
@@ -1144,34 +1148,6 @@ if password.isCorrect, user.exist {  // ...
 ```swift
 if password.isCorrect 
     && user.exist { // ...
-```
-
-If multiple paths exist, the most likely one goes first. Early returns are preferred over multi-level conditional paths.
-
-**Do**:
-
-```swift
-if currency.supported {
-    router.proceedToWithdrawal()
-    return
-}
-if country.isAlly {
-    router.proceedToAgreement()
-    return
-}
-launchRockets()
-```
-
-**Don't**:
-
-```swift
-if currency.supported {
-    return withdrawnAmount
-} else if country.isAlly {
-    return withdrawnAmount / 2
-} else {
-    return 0
-}
 ```
 
 In any `guard`-statement, with either one or multiple conditions, `else` (and its left brace) goes on the same line after the last condition.
@@ -1285,7 +1261,10 @@ var numbers = [1, 2, 3]
 let airVehicles = [helicopter,
                    airLiner,
                    carrierRocket,
-                   wings]
+                   wings, 
+                   baloon, 
+                   broom, 
+                   flyingCarpet]
 ```
 
 **Don't**:
@@ -1296,7 +1275,7 @@ var numbers = [
     3
               ]
               
-let airVehicles = [helicopter, airLiner, carrierRocket, wings]
+let airVehicles = [helicopter, airLiner, carrierRocket, wings, baloon, broom, flyingCarpet]
 ```
 
 The trailing comma after the last element is not used.
@@ -1339,7 +1318,7 @@ coordinate = 2 // Without looking at the declaration it's impossible to know tha
 
 <h4 id="constants">Constants</h4>
 
-Global constants are avoided, leaving alone it's an obvious code smell.
+Global constants are avoided if possible.
 
 The constants within a type declaration are grouped logically into private case-less `enum`s as their static properties. Using case-less `enum`s instead of structures or classes prevents the unwanted initialization of the containing entity, without adding the explicit private empty initializer.
 
